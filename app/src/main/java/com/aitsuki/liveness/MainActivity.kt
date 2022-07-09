@@ -2,17 +2,14 @@ package com.aitsuki.liveness
 
 import android.app.Activity
 import android.content.Intent
-import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.ActivityCompat
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.aitsuki.liveness.LivenessDetectionActivity.Companion.RESULT_KEY_FACING_CAMERA_IMAGE_PATH
 import com.aitsuki.liveness.LivenessDetectionActivity.Companion.RESULT_KEY_OPEN_MOUTH_IMAGE_PATH
 import com.aitsuki.liveness.LivenessDetectionActivity.Companion.RESULT_KEY_SHAKE_IMAGE_PATH
-import com.aitsuki.liveness.databinding.ActivityLivenessDetectionBinding
 import com.aitsuki.liveness.databinding.ActivityMainBinding
 import com.bumptech.glide.Glide
 import java.io.File
