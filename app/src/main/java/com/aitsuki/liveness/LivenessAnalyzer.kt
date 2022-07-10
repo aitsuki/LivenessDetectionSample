@@ -116,7 +116,6 @@ class LivenessAnalyzer(
             val faceDetectionOptions = FaceDetectorOptions.Builder()
                 .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
                 .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
                 .enableTracking()
                 .setMinFaceSize(0.5f)
                 .build()
