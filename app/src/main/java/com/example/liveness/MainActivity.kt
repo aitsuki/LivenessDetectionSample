@@ -3,13 +3,14 @@ package com.example.liveness
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
+import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
 import com.example.liveness.databinding.ActivityMainBinding
-import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,37 +21,33 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val livenessLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                if (it.resultCode == Activity.RESULT_OK) {
-                    val data = it.data ?: return@registerForActivityResult
-                    val facingImagePath =
-                        data.getStringExtra(LivenessActivity.RESULT_KEY_FACING_CAMERA_IMAGE_PATH)
-                    val smilingImagePath =
-                        data.getStringExtra(LivenessActivity.RESULT_KEY_SMILING_IMAGE_PATH)
-                    val mouthImagePath =
-                        data.getStringExtra(LivenessActivity.RESULT_KEY_MOUTH_IMAGE_PATH)
-                    val shakeImagePath =
-                        data.getStringExtra(LivenessActivity.RESULT_KEY_SHAKE_IMAGE_PATH)
-                    if (facingImagePath.isNullOrEmpty()
-                        || smilingImagePath.isNullOrEmpty()
-                        || mouthImagePath.isNullOrEmpty()
-                        || shakeImagePath.isNullOrEmpty()
-                    ) {
-                        Log.d("MainActivity", "face image path error!")
-                        Toast.makeText(this, "Face recognize failed.", Toast.LENGTH_SHORT).show()
-                        return@registerForActivityResult
-                    }
-                    Glide.with(this).load(File(facingImagePath)).into(binding.facingImage)
-                    Glide.with(this).load(File(smilingImagePath)).into(binding.smilingImage)
-                    Glide.with(this).load(File(mouthImagePath)).into(binding.mouthImage)
-                    Glide.with(this).load(File(shakeImagePath)).into(binding.shakeImage)
-                }
-            }
+        val livenessLauncher = registerForActivityResult(LivenessActivity.ResultContract()) {
+            binding.recyclerView.adapter = ImageAdapter(it.orEmpty())
+        }
 
         binding.startBtn.setOnClickListener {
             livenessLauncher.launch(Intent(this, LivenessActivity::class.java))
         }
     }
+}
 
+class ImageAdapter(private val images: List<String>) : RecyclerView.Adapter<ViewHolder>() {
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val imageView = ImageView(parent.context)
+        imageView.layoutParams = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        return object : ViewHolder(imageView) {}
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val image = images[position]
+        Glide.with(holder.itemView).load(image).into(holder.itemView as ImageView)
+    }
+
+    override fun getItemCount(): Int {
+        return images.size
+    }
 }

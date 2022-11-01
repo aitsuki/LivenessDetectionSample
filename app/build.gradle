@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace 'com.example.liveness'
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.example.liveness"
@@ -54,5 +54,5 @@ dependencies {
     implementation("androidx.camera:camera-camera2:${camerax_version}")
     implementation("androidx.camera:camera-lifecycle:${camerax_version}")
     implementation("androidx.camera:camera-view:${camerax_version}")
-    implementation("androidx.camera:camera-mlkit-vision:${camerax_version}")
+    implementation("androidx.camera:camera-mlkit-vision:1.2.0-alpha04")
 }
