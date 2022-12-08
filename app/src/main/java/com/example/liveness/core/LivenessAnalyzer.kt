@@ -2,7 +2,6 @@ package com.example.liveness.core
 
 import android.graphics.Matrix
 import android.graphics.Rect
-import android.util.Log
 import android.util.Size
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageAnalysis.Analyzer
@@ -12,6 +11,7 @@ import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import java.util.concurrent.Executor
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -30,8 +30,8 @@ class LivenessAnalyzer(
     private val onItemPassed: (item: DetectionItem) -> Unit,
 ) : Analyzer {
 
-    private var imageCropWidth = 0
-    private var imageCropHeight = 0
+    private var imageWidth = 0
+    private var imageHeight = 0
     private var imageRotateDegrees = 0
     private val detectionRect = Rect()
     private val faceHistory = Array<Face?>(3) { null }
@@ -58,7 +58,6 @@ class LivenessAnalyzer(
     private fun detect(result: MlKitAnalyzer.Result) {
         if (isCompleted || items.isEmpty()) return
         val faces = result.getValue(faceDetector).orEmpty()
-        Log.d("detect", "detect: ${faces.size}")
         when {
             faces.size > 1 -> failReset(Error.MULTI_FACE)
             faces.isEmpty() && faceHistory.all { it == null } -> failReset(Error.NO_FACE)
@@ -105,8 +104,8 @@ class LivenessAnalyzer(
     }
 
     override fun analyze(image: ImageProxy) {
-        imageCropWidth = image.height
-        imageCropHeight = image.width
+        imageWidth = image.height
+        imageHeight = image.width
         imageRotateDegrees = image.imageInfo.rotationDegrees
         proxyAnalyzer.analyze(image)
     }
@@ -125,26 +124,42 @@ class LivenessAnalyzer(
 
     private fun isFaceInDetectionRect(face: Face?): Boolean {
         face ?: return false
-        var resolutionWidth = imageCropWidth
-        var resolutionHeight = imageCropHeight
-        if (imageRotateDegrees == 90 || imageRotateDegrees == 270) {
-            resolutionWidth = imageCropHeight
-            resolutionHeight = imageCropWidth
-        }
-        val faceX = face.boundingBox.centerX()
-        val faceY = face.boundingBox.centerY()
+        // 1. 检测人脸是否过小或过大
+        val faceMaxSize = imageWidth * 0.9f
+        val faceMinSize = imageWidth * 0.38f
         val faceSize = face.boundingBox.width()
-        val maxSize = min(resolutionWidth, resolutionHeight) * 1f
-        val minSize = min(resolutionWidth, resolutionHeight) * 0.4f
-        if (faceSize > maxSize || faceSize < minSize) return false
+        if (faceSize > faceMaxSize || faceSize < faceMinSize) return false
+
+        // 2. 人脸区域是否在检测区域
+        val verticalSpace = ((imageHeight - imageWidth) * 0.5f).roundToInt()
         detectionRect.set(
-            (resolutionWidth * 0.2f).roundToInt(),
-            (resolutionHeight * 0.2f).roundToInt(),
-            (resolutionWidth * 0.8f).roundToInt(),
-            (resolutionHeight * 0.8f).roundToInt()
+            /* left = */ 0,
+            /* top = */ verticalSpace,
+            /* right = */ imageWidth,
+            /* bottom = */ imageHeight - verticalSpace
         )
-        return detectionRect.contains(faceX, faceY)
+        // 2.1 人脸区域完全在检测区域中
+        if (detectionRect.contains(face.boundingBox)) {
+            return true
+        }
+        // 2.2 人脸区域和检测区域重叠，计算重叠面积至少为人脸区域的 90%
+        val faceArea = faceSize * faceSize
+        if (overlapArea(detectionRect, face.boundingBox).toFloat() / faceArea >= 0.95f) {
+            return true
+        }
+        return false
     }
+
+    private fun overlapArea(a: Rect, b: Rect): Int {
+        val left = max(a.left, b.left)
+        val top = max(a.top, b.top)
+        val right = min(a.right, b.right)
+        val bottom = min(a.bottom, b.bottom)
+        val width = right - left
+        val height = bottom - top
+        return (width * height).coerceAtLeast(1)
+    }
+
 
     enum class Error {
         NO_FACE, MULTI_FACE, OUT_OF_REGION
