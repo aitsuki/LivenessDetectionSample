@@ -60,19 +60,19 @@ class LivenessActivity : AppCompatActivity() {
         binding.cameraPreview.controller = cameraController
     }
 
-    private fun buildLivenessAnalyzer(): LivenessAnalyzer {
+    private fun buildLivenessAnalyzer(): FaceAnalyzer {
         val items = setOf(
             FacingDetectionItem(),
             ShakeDetectionItem(),
             MouthOpenDetectionItem(),
             SmileDetectionItem()
         )
-        return LivenessAnalyzer(
+        return FaceAnalyzer(
             executor = ContextCompat.getMainExecutor(this),
             items = items,
             onFailed = { err ->
                 imageFiles.clear()
-                if (err == LivenessAnalyzer.Error.MULTI_FACE) {
+                if (err == FaceAnalyzer.Error.MULTI_FACE) {
                     Toast.makeText(
                         this,
                         "Please make sure there is only one face on the screen.",
