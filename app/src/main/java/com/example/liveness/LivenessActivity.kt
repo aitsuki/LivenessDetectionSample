@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Outline
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewOutlineProvider
 import android.widget.Toast
@@ -17,17 +16,18 @@ import androidx.camera.core.*
 import androidx.camera.view.LifecycleCameraController
 import androidx.core.content.ContextCompat
 import com.example.liveness.core.*
+import com.example.liveness.core.tasks.FacingDetectionTask
+import com.example.liveness.core.tasks.MouthOpenDetectionTask
+import com.example.liveness.core.tasks.ShakeDetectionTask
+import com.example.liveness.core.tasks.SmileDetectionTask
 import com.example.liveness.databinding.ActivityLivenessBinding
 import java.io.File
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 class LivenessActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLivenessBinding
-    private val analyzerExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private lateinit var cameraController: LifecycleCameraController
-    private var imageFiles: ArrayList<String> = arrayListOf()
+    private var imageFiles = arrayListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,57 +55,61 @@ class LivenessActivity : AppCompatActivity() {
     private fun startCamera() {
         cameraController = LifecycleCameraController(this)
         cameraController.cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-        cameraController.setImageAnalysisAnalyzer(analyzerExecutor, buildLivenessAnalyzer())
+        cameraController.setImageAnalysisAnalyzer(
+            ContextCompat.getMainExecutor(this),
+            FaceAnalyzer(buildLivenessDetector())
+        )
         cameraController.bindToLifecycle(this)
         binding.cameraPreview.controller = cameraController
     }
 
-    private fun buildLivenessAnalyzer(): FaceAnalyzer {
-        val items = setOf(
-            FacingDetectionItem(),
-            ShakeDetectionItem(),
-            MouthOpenDetectionItem(),
-            SmileDetectionItem()
-        )
-        return FaceAnalyzer(
-            executor = ContextCompat.getMainExecutor(this),
-            items = items,
-            onFailed = { err ->
-                imageFiles.clear()
-                if (err == FaceAnalyzer.Error.MULTI_FACE) {
-                    Toast.makeText(
-                        this,
-                        "Please make sure there is only one face on the screen.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            },
-            onItemStarted = { item ->
-                when (item) {
-                    is FacingDetectionItem ->
+    private fun buildLivenessDetector(): LivenessDetector {
+        val listener = object : LivenessDetector.Listener {
+            @SuppressLint("SetTextI18n")
+            override fun onTaskStarted(task: DetectionTask) {
+                when (task) {
+                    is FacingDetectionTask ->
                         binding.guide.text = "Please squarely facing the camera"
-                    is ShakeDetectionItem ->
+                    is ShakeDetectionTask ->
                         binding.guide.text = "Slowly shake your head left or right"
-                    is MouthOpenDetectionItem ->
+                    is MouthOpenDetectionTask ->
                         binding.guide.text = "Please open your mouth"
-                    is SmileDetectionItem ->
+                    is SmileDetectionTask ->
                         binding.guide.text = "Please smile"
                 }
-            },
-            onItemPassed = { item ->
-                Log.d("onItemPassed", item::class.java.name)
+            }
+
+            override fun onTaskCompleted(task: DetectionTask, isLastTask: Boolean) {
                 takePhoto(File(cacheDir, "${System.currentTimeMillis()}.jpg")) {
                     imageFiles.add(it.absolutePath)
-                    if (item == items.last()) {
+                    if (isLastTask) {
                         finishForResult()
                     }
                 }
             }
-        )
+
+            override fun onTaskFailed(task: DetectionTask, code: Int) {
+                if (code == LivenessDetector.ERROR_MULTI_FACES) {
+                    Toast.makeText(
+                        this@LivenessActivity,
+                        "Please make sure there is only one face on the screen.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+
+        return LivenessDetector(
+            FacingDetectionTask(),
+            ShakeDetectionTask(),
+            MouthOpenDetectionTask(),
+            SmileDetectionTask()
+        ).also { it.setListener(listener) }
     }
 
     private fun finishForResult() {
-        setResult(RESULT_OK, Intent().putStringArrayListExtra("images", imageFiles))
+        val result = ArrayList(imageFiles.takeLast(4))
+        setResult(RESULT_OK, Intent().putStringArrayListExtra("images", result))
         finish()
     }
 
@@ -124,11 +128,6 @@ class LivenessActivity : AppCompatActivity() {
                 }
             }
         )
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        analyzerExecutor.shutdown()
     }
 
     class ResultContract : ActivityResultContract<Intent, List<String>?>() {

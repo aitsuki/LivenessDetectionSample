@@ -1,26 +1,27 @@
-package com.example.liveness.core
+package com.example.liveness.core.tasks
 
+import com.example.liveness.core.DetectionTask
 import com.google.mlkit.vision.face.Face
 
-class ShakeDetectionItem : DetectionItem {
+class ShakeDetectionTask : DetectionTask {
 
     companion object {
-        private const val THRESHOLD = 18f
+        private const val SHAKE_THRESHOLD = 18f
     }
 
     private var hasShakeToLeft = false
     private var hasShakeToRight = false
 
-    override fun prepare() {
+    override fun start() {
         hasShakeToLeft = false
         hasShakeToRight = false
     }
 
-    override fun detect(face: Face): Boolean {
+    override fun process(face: Face): Boolean {
         val yaw = face.headEulerAngleY
-        if (yaw > THRESHOLD && !hasShakeToLeft) {
+        if (yaw > SHAKE_THRESHOLD && !hasShakeToLeft) {
             hasShakeToLeft = true
-        } else if (yaw < -THRESHOLD && !hasShakeToRight) {
+        } else if (yaw < -SHAKE_THRESHOLD && !hasShakeToRight) {
             hasShakeToRight = true
         }
         return hasShakeToLeft || hasShakeToRight

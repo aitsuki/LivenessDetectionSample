@@ -22,8 +22,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:fontFamily="sans-serif-medium"
-        android:textAppearance="?attr/textAppearanceBodyLarge"
-        android:textColor="?attr/colorPrimary"
         app:layout_constraintBottom_toTopOf="@id/camera_preview"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -38,9 +36,11 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_max="240dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
         app:layout_constraintVertical_bias="0.3"
+        app:layout_constraintWidth_max="240dp"
         app:layout_constraintWidth_percent="0.6" />
 
 

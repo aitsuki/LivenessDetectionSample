@@ -1,11 +1,9 @@
 package com.example.liveness
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.ViewGroup
 import android.widget.ImageView
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
@@ -19,6 +17,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
+        lifecycle.currentState
         setContentView(binding.root)
 
         val livenessLauncher = registerForActivityResult(LivenessActivity.ResultContract()) {
