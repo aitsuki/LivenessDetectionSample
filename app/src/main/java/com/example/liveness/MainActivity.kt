@@ -1,6 +1,5 @@
 package com.example.liveness
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -25,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.startBtn.setOnClickListener {
-            livenessLauncher.launch(Intent(this, LivenessActivity::class.java))
+            livenessLauncher.launch(null)
         }
     }
 }

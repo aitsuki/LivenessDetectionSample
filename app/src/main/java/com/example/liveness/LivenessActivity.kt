@@ -109,7 +109,7 @@ class LivenessActivity : AppCompatActivity() {
 
     private fun finishForResult() {
         val result = ArrayList(imageFiles.takeLast(4))
-        setResult(RESULT_OK, Intent().putStringArrayListExtra("images", result))
+        setResult(RESULT_OK, Intent().putStringArrayListExtra(ResultContract.RESULT_KEY, result))
         finish()
     }
 
@@ -130,15 +130,19 @@ class LivenessActivity : AppCompatActivity() {
         )
     }
 
-    class ResultContract : ActivityResultContract<Intent, List<String>?>() {
+    class ResultContract : ActivityResultContract<Any?, List<String>?>() {
 
-        override fun createIntent(context: Context, input: Intent): Intent {
+        companion object {
+            const val RESULT_KEY = "images"
+        }
+
+        override fun createIntent(context: Context, input: Any?): Intent {
             return Intent(context, LivenessActivity::class.java)
         }
 
         override fun parseResult(resultCode: Int, intent: Intent?): List<String>? {
             if (resultCode == RESULT_OK && intent != null) {
-                return intent.getStringArrayListExtra("images")
+                return intent.getStringArrayListExtra(RESULT_KEY)
             }
             return null
         }
