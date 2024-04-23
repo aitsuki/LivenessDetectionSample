@@ -1,18 +1,35 @@
 package com.example.liveness.core
 
 import android.graphics.PointF
-import android.util.Log
 import com.google.mlkit.vision.face.Face
+import com.google.mlkit.vision.face.FaceContour
 import com.google.mlkit.vision.face.FaceLandmark
 import kotlin.math.acos
 import kotlin.math.sqrt
 
 object DetectionUtils {
 
-    fun isFacing(face: Face): Boolean {
-        return face.headEulerAngleZ < 7.78f && face.headEulerAngleZ > -7.78f
-                && face.headEulerAngleY < 11.8f && face.headEulerAngleY > -11.8f
-                && face.headEulerAngleX < 19.8f && face.headEulerAngleX > -19.8f
+    private const val YAW_THRESHOLD = 12f
+    private const val PITCH_THRESHOLD = 8f
+    private const val ROLL_THRESHOLD = 8f
+    private const val SIDE_FACE_YAW_THRESHOLD = 20f
+
+    fun isFrontFace(face: Face): Boolean {
+        val yaw = face.headEulerAngleY // 左右摇头角度
+        val pitch = face.headEulerAngleX // 上下点头角度
+        val roll = face.headEulerAngleZ // 旋转角度
+        return yaw < YAW_THRESHOLD && yaw > -YAW_THRESHOLD
+                && pitch < PITCH_THRESHOLD && pitch > -PITCH_THRESHOLD
+                && roll < ROLL_THRESHOLD && roll > -ROLL_THRESHOLD
+    }
+
+    fun isSideFace(face: Face): Boolean {
+        val yaw = face.headEulerAngleY // 左右摇头角度
+        val pitch = face.headEulerAngleX // 上下点头角度
+        val roll = face.headEulerAngleZ // 旋转角度
+        return (yaw > SIDE_FACE_YAW_THRESHOLD || yaw < -SIDE_FACE_YAW_THRESHOLD)
+                && pitch < PITCH_THRESHOLD && pitch > -PITCH_THRESHOLD
+                && roll < ROLL_THRESHOLD && roll > -ROLL_THRESHOLD
     }
 
     fun isMouthOpened(face: Face): Boolean {
@@ -43,25 +60,13 @@ object DetectionUtils {
         return x * x + y * y
     }
 
-    // 将检测区域抽象成 8x8 窗格计算
-    // - 人脸中心点限定在中间的 4x4 方块中
-    // - 人脸不能大于 6x6 且不能小于 3x3
-    fun isFaceInDetectionRect(face: Face, detectionSize: Int): Boolean {
-        val fRect = face.boundingBox
-        val fx = fRect.centerX()
-        val fy = fRect.centerY()
-        val gridSize = detectionSize / 8
-        if (fx < gridSize * 2 || fx > gridSize * 6 || fy < gridSize * 2 || fy > gridSize * 6) {
-            Log.d("isFaceInDetectionRect", "face center point is out of rect: ($fx, $fy)")
-            return false
-        }
-
-        val fw = fRect.width()
-        val fh = fRect.height()
-        if (fw < gridSize * 3 || fw > gridSize * 6 || fh < gridSize * 3 || fh > gridSize * 6) {
-            Log.d("isFaceInDetectionRect", "unexpected face size: $fw x $fh")
-            return false
-        }
-        return true
+    fun isWholeFace(face: Face, imageWidth: Int, imageHeight: Int): Boolean {
+        val boundingBox = face.boundingBox
+        val contours = face.getContour(FaceContour.FACE)
+        val top = boundingBox.top
+        val bottom = boundingBox.bottom
+        val left = contours?.points?.getOrNull(27)?.x?.toInt() ?: boundingBox.left
+        val right = contours?.points?.getOrNull(9)?.x?.toInt() ?: boundingBox.right
+        return top > 0 && bottom < imageHeight && left > 0 && right < imageWidth
     }
 }
