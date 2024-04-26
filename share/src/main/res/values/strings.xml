@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_settings_title">Permission Requirement</string>
+    <string name="permission_settings_content">We need camera permissions for face authentication. Please go to the application details page to grant camera permissions.</string>
+    <string name="permission_settings_confirm">Go to settings</string>
+    <string name="permission_settings_cancel">Cancel</string>
+    <string name="permission_denied">Permission Denied</string>
+
+    <string name="start_liveness">Start Liveness</string>
+    <string name="error_no_faces">No faces detected</string>
+    <string name="error_multi_faces">Multiple faces detected</string>
+    <string name="face_tips_smile">Please smile</string>
+    <string name="face_tips_front_face">Please look at the camera</string>
+    <string name="face_tips_side_face">Please show your side face</string>
+    <string name="face_tips_mouth">Please open your mouth</string>
+</resources>

@@ -19,4 +19,6 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "LivenessDetection"
-include(":app")
+include(":sample-compose")
+include(":share")
+include(":sample-view")
