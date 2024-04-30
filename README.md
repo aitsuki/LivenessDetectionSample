@@ -5,9 +5,7 @@
 
 ## Demo
 
-Android Demo有View和Compose版本
-
-- `sample-view`: View + Activity
-- `sample-compose`: Compose + Navigation
-
+- `android/sample-view`: View + Activity
+- `android/sample-compose`: Compose + Navigation
+- `flutter`: Flutter
 
