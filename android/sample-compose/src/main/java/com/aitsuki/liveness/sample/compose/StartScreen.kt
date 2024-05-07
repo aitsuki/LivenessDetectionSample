@@ -1,10 +1,12 @@
 package com.aitsuki.liveness.sample.compose
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -14,10 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -26,16 +27,15 @@ import coil.compose.AsyncImage
 @Composable
 fun StartScreen() {
     val navController = LocalNavController.current
-    var faceImages by rememberSaveable { mutableStateOf(emptyArray<String>()) }
+    var faceImages: Array<String>? by remember { mutableStateOf(null) }
+    var cardImage: String? by remember { mutableStateOf(null) }
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         LaunchedEffect(Unit) {
             navController.currentBackStackEntry?.savedStateHandle?.let { savedStateHandle ->
-                val images = savedStateHandle.remove<Array<String>>("liveness_images")
-                if (!images.isNullOrEmpty()) {
-                    faceImages = images
-                }
+                faceImages = savedStateHandle.remove<Array<String>>("liveness_images")
+                cardImage = savedStateHandle.remove("card_image")
             }
         }
 
@@ -44,7 +44,7 @@ fun StartScreen() {
                 .fillMaxWidth()
                 .weight(1f)
         ) {
-            if (faceImages.isNotEmpty()) {
+            faceImages?.takeIf { it.isNotEmpty() }?.let { faceImages ->
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     modifier = Modifier.fillMaxSize()
@@ -59,16 +59,34 @@ fun StartScreen() {
                     }
                 }
             }
+            cardImage?.let { cardImage ->
+                AsyncImage(
+                    model = cardImage,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.FillWidth,
+                )
+            }
         }
 
-        Button(
-            onClick = { navController.navigate("liveness") },
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
-            shape = RectangleShape,
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(text = stringResource(id = com.aitsuki.liveness.R.string.start_liveness))
+            Button(
+                onClick = { navController.navigate("liveness") },
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(text = stringResource(id = com.aitsuki.liveness.R.string.start_liveness))
+            }
+            Button(
+                onClick = { navController.navigate("camera") },
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(text = stringResource(id = com.aitsuki.liveness.R.string.start_camera))
+            }
         }
     }
 }

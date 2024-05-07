@@ -33,6 +33,9 @@ class MainActivity : ComponentActivity() {
                         composable("liveness") {
                             LivenessScreen()
                         }
+                        composable("camera") {
+                            CardCameraScreen()
+                        }
                     }
                 }
             }

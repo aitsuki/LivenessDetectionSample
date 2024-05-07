@@ -62,6 +62,7 @@ fun CameraPreview(
         }
     }
 
+    // TODO: DisposableEffect 的执行时机比较晚，导致navigation导航时能看到相机预览残留（大约1秒）。
     DisposableEffect(Unit) {
         onDispose {
             cameraProvider?.unbindAll()

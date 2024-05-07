@@ -13,4 +13,6 @@
     <string name="face_tips_front_face">Please look at the camera</string>
     <string name="face_tips_side_face">Please show your side face</string>
     <string name="face_tips_mouth">Please open your mouth</string>
+    <string name="start_camera">Start Camera</string>
+    <string name="camera_tips">Please place your ID card within the frame.</string>
 </resources>

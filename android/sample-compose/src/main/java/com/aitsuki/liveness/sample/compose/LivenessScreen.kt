@@ -1,7 +1,6 @@
 package com.aitsuki.liveness.sample.compose
 
-import android.Manifest.permission.CAMERA
-import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.Manifest
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -33,11 +32,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
-import androidx.core.content.ContextCompat
 import com.aitsuki.liveness.FaceDetectionController
 import com.aitsuki.liveness.FaceDetectionError
 import com.aitsuki.liveness.sample.compose.component.CameraPreview
-import com.aitsuki.liveness.sample.compose.component.RequestCameraPermission
+import com.aitsuki.liveness.sample.compose.component.WithPermission
 import com.aitsuki.liveness.state.DetectionState
 import com.aitsuki.liveness.state.FrontFaceDetectionState
 import com.aitsuki.liveness.state.MouthOpenDetectionState
@@ -52,13 +50,6 @@ fun LivenessScreen() {
     val context = LocalContext.current
     val navController = LocalNavController.current
     val coroutineScope = rememberCoroutineScope()
-
-    var grantedPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, CAMERA) == PERMISSION_GRANTED
-        )
-    }
-
     var faceError: FaceDetectionError? by remember { mutableStateOf(null) }
     var statusText by remember { mutableStateOf("") }
 
@@ -98,13 +89,6 @@ fun LivenessScreen() {
         }
     }
 
-    if (!grantedPermission) {
-        RequestCameraPermission(
-            onDenied = { navController.popBackStack() },
-            onGranted = { grantedPermission = true }
-        )
-    }
-
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -134,15 +118,20 @@ fun LivenessScreen() {
                     style = typography.labelLarge,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                CameraPreview(
-                    enabled = grantedPermission,
-                    cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA,
-                    imageCapture = faceDetectionController.imageCapture,
-                    imageAnalysis = faceDetectionController.imageAnalysis,
-                    modifier = Modifier
-                        .size(maxSize)
-                        .clip(shape = RoundedCornerShape(50))
-                )
+                WithPermission(
+                    permission = Manifest.permission.CAMERA,
+                    onDenied = { navController.popBackStack() },
+                ) { isGranted ->
+                    CameraPreview(
+                        enabled = isGranted,
+                        cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA,
+                        imageCapture = faceDetectionController.imageCapture,
+                        imageAnalysis = faceDetectionController.imageAnalysis,
+                        modifier = Modifier
+                            .size(maxSize)
+                            .clip(shape = RoundedCornerShape(50))
+                    )
+                }
             }
         }
     }

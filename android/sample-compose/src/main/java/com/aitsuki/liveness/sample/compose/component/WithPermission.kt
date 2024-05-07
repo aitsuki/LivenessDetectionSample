@@ -1,6 +1,5 @@
 package com.aitsuki.liveness.sample.compose.component
 
-import android.Manifest.permission.CAMERA
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.net.Uri
@@ -22,39 +21,40 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionStatus
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun RequestCameraPermission(
+fun WithPermission(
+    permission: String,
     onDenied: () -> Unit,
-    onGranted: () -> Unit
+    content: @Composable (isGranted: Boolean) -> Unit,
 ) {
     var showSettingDialog by remember { mutableStateOf(false) }
     var callbackKey by remember { mutableIntStateOf(0) }
-    val permissionState = rememberPermissionState(permission = CAMERA) {
+    val permissionState = rememberPermissionState(permission = permission) {
         callbackKey += 1
     }
 
     if (showSettingDialog) {
         SettingsDialog(
+            permission = permission,
             onDenied = {
                 showSettingDialog = false
                 onDenied()
             },
             onGranted = {
                 showSettingDialog = false
-                onGranted()
             }
         )
     }
 
-    LaunchedEffect(Unit) {
-        permissionState.launchPermissionRequest()
-    }
-
     LaunchedEffect(callbackKey) {
-        if (callbackKey == 0) return@LaunchedEffect
+        if (callbackKey == 0) {
+            permissionState.launchPermissionRequest()
+            return@LaunchedEffect
+        }
         val status = permissionState.status
         if (status is PermissionStatus.Denied) {
             if (status.shouldShowRationale) {
@@ -62,14 +62,15 @@ fun RequestCameraPermission(
             } else {
                 showSettingDialog = true
             }
-        } else {
-            onGranted()
         }
     }
+
+    content(permissionState.status.isGranted)
 }
 
 @Composable
 private fun SettingsDialog(
+    permission: String,
     onDenied: () -> Unit,
     onGranted: () -> Unit
 ) {
@@ -77,7 +78,7 @@ private fun SettingsDialog(
     val settingLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
         onResult = {
-            if (ContextCompat.checkSelfPermission(context, CAMERA) == PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(context, permission) == PERMISSION_GRANTED) {
                 onGranted()
             }
         }
